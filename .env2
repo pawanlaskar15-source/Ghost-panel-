@@ -1,0 +1,13 @@
+BOT_TOKEN=8792796962:AAHnhX0WM4ZVja7sbvh6mt9vFWqWp2XliVE
+
+MONGO_URL=mongodb+srv://flushi3693694_db_user:150qCqkKFkWlT2bh@cluster0.wdfotef.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+# RetroStress API Configuration
+
+API_BASE_URL=https://retrostress.net/api/start
+
+API_KEY=e3acbb4b0e9d32289a9b327b291b51d6663c92d2b6f49b6f5db68594cdff9747
+
+BOT_OWNER=7944283616,1783291270
+
+ATTACK_METHOD=UDP-BIG

