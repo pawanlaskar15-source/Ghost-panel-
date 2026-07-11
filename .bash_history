@@ -333,3 +333,58 @@ python env.py
 sudo su 
 sudo su
 sudo su 
+cd /home/ubuntu
+git init
+git add .
+git commit -m "First commit"
+git branch -M main
+git remote add origin https://github.com/pawanlaskar15-source/Ghost-panel-.git
+git push -u origin main
+cd /home/ubuntu
+git init
+git add .
+git commit -m "First commit"
+git branch -M main
+git remote add origin https://github.com/pawanlaskar15-source/Ghost-panel-.git
+git push -u origin main
+cd /home/ubuntu
+git init
+git add .
+git commit -m "First commit"
+git branch -M main
+git remote add origin https://github.com/pawanlaskar15-source/Ghost-panel-.git
+git push -u origin main
+git remote -v
+git config --global --unset credential.helper
+git push -u origin main
+git push -u origin main
+cd /home/ubuntu
+grep -R "ALONExRAJ" .
+./env.py:145: ALONExRAJ
+nano env.py
+rm env.py
+nano env.py
+rm -f env.py
+nano env.py
+git add env.py
+git commit -m "Updated panel name"
+git push origin main
+git config --global --unset credential.helper
+git push origin main
+sudo su
+sudo su
+sudo su
+sudo su
+sudo su
+sudo su
+sudo su
+sudo su
+sudo su
+pkill -9 -f "python3.*tran.py"
+rm tran.py
+nano tran.py
+nano tran.py
+python3 tran.py
+nano tran.py
+python3 tran.py
+sudo su

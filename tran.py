@@ -20,8 +20,8 @@ import random
 import logging
 
 # ================= CONFIG =================
-BOT_TOKEN = "8745935022:AAGOSYPjT6dR04OJqqBWoLlBAASi9_V5nrI"
-REAL_OWNER_ID = 7944283616
+BOT_TOKEN = "8745935022:AAF5on0ipVtZHF2LxuZgE11drWYDig5KO8I"
+OWNER_IDS = [7944283616]
 DISPLAY_OWNER_ID = 1
 
 MONGO_URI = "mongodb+srv://sohannishadparvati_db_user:A1Cf7TEd556ObYh0@cluster0.kiwznmu.mongodb.net/?appName=Cluster0"
@@ -35,6 +35,10 @@ DEFAULT_COOLDOWN = 80
 DEFAULT_MAX_CONCURRENT = 150
 PORT_BLOCK_DURATION = 7200
 DEFAULT_TARGET_MULTIPLIER = 1
+
+# Credit System: 1 hour = 10 credits, 1 day = 240 credits
+CREDITS_PER_HOUR = 10
+CREDITS_PER_DAY = 240
 
 # Video URLs
 VIDEO_URLS = [
@@ -163,7 +167,7 @@ def set_global_target_multiplier(multiplier):
 
 # ------------------ Helper Functions ------------------
 def is_owner(user_id):
-    return user_id == REAL_OWNER_ID
+    return user_id in OWNER_IDS
 
 def is_admin(user_id):
     return admins_col.count_documents({"_id": str(user_id)}) > 0
@@ -565,8 +569,8 @@ def target_command(message):
             parse_mode="HTML")
         return
     
-    if not is_admin_or_owner(user_id):
-        bot.reply_to(message, "❌ Only owner and admins can change global target multiplier!", parse_mode="HTML")
+    if not is_owner(user_id):
+        bot.reply_to(message, "❌ Only owners can change global target multiplier!", parse_mode="HTML")
         return
     
     try:
@@ -795,8 +799,12 @@ def report_command(message):
         user_info += f" ({html.escape(user.first_name)})"
     forward_msg = f"📢 <b>New Report</b>\n\n{user_info}\n\n📝 Message:\n{report_text}"
     try:
-        bot.send_message(REAL_OWNER_ID, forward_msg, parse_mode="HTML")
-        bot.reply_to(message, "✅ Your report has been sent to the owner. Thank you!")
+        for owner_id in OWNER_IDS:
+            try:
+                bot.send_message(owner_id, forward_msg, parse_mode="HTML")
+            except:
+                pass
+        bot.reply_to(message, "✅ Your report has been sent to the owners. Thank you!")
     except Exception as e:
         bot.reply_to(message, "❌ Failed to send report. Please try again later.")
 
@@ -818,10 +826,15 @@ def reseller_panel_cmd(message):
 
 💰 <b>Your Credits:</b> {credits}
 
+📋 <b>Credit System:</b>
+• 1 hour = {CREDITS_PER_HOUR} credits
+• 1 day = {CREDITS_PER_DAY} credits
+
 📋 <b>Commands:</b>
-✨ /gen &lt;prefix&gt; &lt;time&gt; &lt;unit&gt; &lt;count&gt; – Generate keys (1 credit per day)
-   Example: /gen TEST 7 days 5
-   Example: /gen TEST 12 hours 3
+✨ /gen &lt;prefix&gt; &lt;time&gt; &lt;unit&gt; &lt;count&gt; – Generate keys
+   Example: /gen VIP 1 hour 1
+   Example: /gen VIP 12 hours 5
+   Example: /gen TEST 2 days 3
 ✨ /mycredit – Check your credit balance
 ✨ /keyreset &lt;code&gt; – Reset expiry of an unredeemed key (max 2 resets)
 ✨ /keyblock &lt;code&gt; – Block any key you generated
@@ -852,7 +865,7 @@ def gen_reseller(message):
         return
     parts = message.text.split()
     if len(parts) != 5:
-        bot.reply_to(message, "⚠️ Usage: /gen &lt;prefix&gt; &lt;time&gt; &lt;unit&gt; &lt;count&gt;\n\nUnit: days or hours\nExample: /gen TEST 7 days 5\nExample: /gen TEST 12 hours 3", parse_mode="HTML")
+        bot.reply_to(message, "⚠️ Usage: /gen &lt;prefix&gt; &lt;time&gt; &lt;unit&gt; &lt;count&gt;\n\nUnit: hours or days\nExample: /gen VIP 1 hour 1\nExample: /gen VIP 12 hours 5\nExample: /gen TEST 2 days 3\n\n💳 Credit Cost:\n• 1 hour = 10 credits\n• 1 day = 240 credits", parse_mode="HTML")
         return
     prefix = parts[1]
     try:
@@ -863,33 +876,34 @@ def gen_reseller(message):
         bot.reply_to(message, "❌ Time and count must be numbers.")
         return
 
-    if unit not in ['days', 'day', 'd', 'hours', 'hour', 'h']:
-        bot.reply_to(message, "❌ Invalid unit! Use 'days' or 'hours'")
+    # Support both singular and plural
+    if unit in ['hour', 'hours', 'h']:
+        unit = 'hours'
+    elif unit in ['day', 'days', 'd']:
+        unit = 'days'
+    else:
+        bot.reply_to(message, "❌ Invalid unit! Use 'hour(s)' or 'day(s)'")
         return
 
-    if unit in ['day', 'd']:
-        unit = 'days'
-    if unit in ['hour', 'h']:
-        unit = 'hours'
-
+    total_cost = 0
+    
     if not is_owner(user_id):
-        if unit == 'days' and time_value > 15:
-            bot.reply_to(message, "❌ Resellers can generate keys for a maximum of 15 days.")
-            return
-        if unit == 'hours' and time_value > 360:
-            bot.reply_to(message, "❌ Resellers can generate keys for a maximum of 360 hours (15 days).")
-            return
-        
-        if unit == 'days':
-            total_cost = time_value * count
-        else:
-            total_cost = (time_value / 24) * count
-            total_cost = int(total_cost) + (1 if total_cost % 1 > 0 else 0)
+        # Calculate credit cost
+        if unit == 'hours':
+            total_cost = time_value * CREDITS_PER_HOUR * count
+            if time_value > 360:  # Max 360 hours (15 days)
+                bot.reply_to(message, f"❌ Resellers can generate keys for a maximum of 360 hours (15 days).")
+                return
+        else:  # days
+            total_cost = time_value * CREDITS_PER_DAY * count
+            if time_value > 15:
+                bot.reply_to(message, f"❌ Resellers can generate keys for a maximum of 15 days.")
+                return
         
         reseller = resellers_col.find_one({"_id": str(user_id)})
         credits = reseller.get("credits", 0) if reseller else 0
         if credits < total_cost:
-            bot.reply_to(message, f"❌ Insufficient credits! You have {credits} credit(s) but need {total_cost}.")
+            bot.reply_to(message, f"❌ Insufficient credits! You have {credits} credit(s) but need {total_cost}.\n\n💳 Cost breakdown: {time_value} {unit} × {count} keys = {total_cost} credits", parse_mode="HTML")
             return
         resellers_col.update_one({"_id": str(user_id)}, {"$inc": {"credits": -total_cost}})
 
@@ -897,9 +911,11 @@ def gen_reseller(message):
     if unit == 'days':
         expires = datetime.now() + timedelta(days=time_value)
         duration_days = time_value
-    else:
+        time_display = f"{time_value} days"
+    else:  # hours
         expires = datetime.now() + timedelta(hours=time_value)
         duration_days = time_value / 24.0
+        time_display = f"{time_value} hours"
 
     for _ in range(count):
         code = generate_code(prefix, 8)
@@ -925,24 +941,27 @@ def gen_reseller(message):
 
     code_list = "\n".join([f"{c}" for c in codes])
     remaining_credits = ""
-    if not is_owner(user_id):
+    
+    if is_owner(user_id):
+        cost_info = "\n💳 <b>Total Cost:</b> Free (Owner)"
+    else:
+        cost_info = f"\n💳 <b>Total Cost:</b> {total_cost} credits"
         reseller = resellers_col.find_one({"_id": str(user_id)})
         remaining_credits = f"\n💳 <b>Credits Left:</b> {reseller['credits']}"
 
-    time_display = f"{time_value} {unit}"
     if count == 1:
         text = f"""✨ Generated {count} Private Key
 
 🔑 Code: {codes[0]}
 ⏳ Duration: {time_display}
-🎯 Usage: Unlimited attacks{remaining_credits}"""
+🎯 Usage: Unlimited attacks{cost_info}{remaining_credits}"""
     else:
         text = f"""✨ Generated {count} Private Keys
 
 {code_list}
 
 ⏳ Duration: {time_display}
-🎯 Usage: Unlimited attacks per key{remaining_credits}"""
+🎯 Usage: Unlimited attacks per key{cost_info}{remaining_credits}"""
     bot.reply_to(message, text, parse_mode="HTML")
 
 @bot.message_handler(commands=['keyreset'])
@@ -990,7 +1009,10 @@ def keyreset_command(message):
 
     unit = key.get("unit", "days")
     time_value = key.get("time_value", original_days)
-    time_display = f"{time_value} {unit}"
+    if unit == 'hours':
+        time_display = f"{int(time_value)} hours"
+    else:
+        time_display = f"{int(time_value)} days"
 
     bot.reply_to(message,
         f"✅ Key {code} reset (#{reset_count+1}/2).\n"
@@ -1044,14 +1066,19 @@ def keyblock_command(message):
 
     if not is_owner(user_id):
         if refund_days > 0:
-            resellers_col.update_one({"_id": str(user_id)}, {"$inc": {"credits": refund_days}})
+            unit = key.get("unit", "days")
+            if unit == 'hours':
+                refund_credits = int(refund_days * 24 * CREDITS_PER_HOUR)
+            else:
+                refund_credits = int(refund_days * CREDITS_PER_DAY)
+            resellers_col.update_one({"_id": str(user_id)}, {"$inc": {"credits": refund_credits}})
         new_credits = resellers_col.find_one({"_id": str(user_id)})["credits"]
 
         msg = f"🚫 Key {code} blocked.\n"
         if penalty_applied:
-            msg += f"💰 <b>{refund_days} credit(s) refunded</b> (penalty applied).\n"
+            msg += f"💰 <b>{refund_credits} credit(s) refunded</b> (penalty applied).\n"
         else:
-            msg += f"💰 <b>{refund_days} credit(s) refunded</b> (full refund).\n"
+            msg += f"💰 <b>{refund_credits} credit(s) refunded</b> (full refund).\n"
         msg += f"💳 Your new balance: {new_credits}"
         bot.reply_to(message, msg, parse_mode="HTML")
     else:
@@ -1096,7 +1123,10 @@ def redeem_code(message):
     
     unit = key.get("unit", "days")
     time_value = key.get("time_value", "")
-    time_display = f"{time_value} {unit}" if time_value else ""
+    if unit == 'hours':
+        time_display = f"{int(time_value)} hours" if time_value else ""
+    else:
+        time_display = f"{int(time_value)} days" if time_value else ""
     
     bot.reply_to(message, f"✅ <b>Code Redeemed!</b>\n\n🎯 Attacks: {'Unlimited' if key['attacks_left'] == -1 else key['attacks_left']}\n⏱️ Max Duration: {key['max_duration']}s\n⏳ Cooldown: {key['cooldown']}s\n📅 Valid until: {expires.strftime('%Y-%m-%d %H:%M:%S')}\n📅 Duration: {time_display}\n\nYou can now use /attack in private chat.", parse_mode="HTML")
 
@@ -1111,13 +1141,10 @@ def handle_attack(message):
     
     max_concurrent_user, max_duration, cooldown_seconds = get_user_limits(user_id)
     
-    # Sirf multiplier set karo, koi message nahi
     multiplier = min(global_multiplier, max_concurrent_user)
     
     if multiplier < 1:
         multiplier = 1
-    
-    # Koi warning/error message nahi bhejna - SILENT
     
     if is_group(message):
         group_max_concurrent, group_max_time, group_cooldown = get_group_limits(message.chat.id)
@@ -1329,7 +1356,7 @@ Use /state for detailed statistics.
 📋 <b>Commands:</b>
 
 🔹 <b>Target Multiplier:</b>
-• /target &lt;1-10&gt; – Set global multiplier for ALL users
+• /target &lt;1-10&gt; – Set global multiplier for ALL users (OWNER ONLY)
 
 🔹 <b>Admin Management:</b>
 • /addadmin &lt;user_id&gt; – Add an admin
@@ -1640,8 +1667,8 @@ def ban_user(message):
         return
     try:
         uid = int(parts[1])
-        if uid == REAL_OWNER_ID:
-            bot.reply_to(message, "❌ Cannot ban the owner!")
+        if is_owner(uid):
+            bot.reply_to(message, "❌ Cannot ban an owner!")
             return
         bans_col.update_one({"_id": str(uid)}, {"$set": {"_id": str(uid)}}, upsert=True)
         log_admin_action(message.from_user.id, "ban_user", f"id={uid}")
@@ -2226,7 +2253,10 @@ def key_state_command(message):
     
     unit = key.get("unit", "days")
     time_value = key.get("time_value", "")
-    time_display = f"{time_value} {unit}" if time_value else ""
+    if unit == 'hours':
+        time_display = f"{int(time_value)} hours" if time_value else ""
+    else:
+        time_display = f"{int(time_value)} days" if time_value else ""
     
     text = f"""🔍 <b>Key State:</b> {code}
 
@@ -2640,14 +2670,20 @@ def handle_unknown(message):
     else:
         if get_setting("feedback_system", False) and not is_group(message) and message.content_type == 'photo':
             try:
-                bot.forward_message(REAL_OWNER_ID, message.chat.id, message.message_id)
-                bot.reply_to(message, "📸 Feedback sent to owner. Thank you!")
+                for owner_id in OWNER_IDS:
+                    try:
+                        bot.forward_message(owner_id, message.chat.id, message.message_id)
+                    except:
+                        pass
+                bot.reply_to(message, "📸 Feedback sent to owners. Thank you!")
             except:
                 pass
 
 # ================= BOT POLLING =================
 print("Bot starting...")
 print("Bot is running on VPS")
+print(f"Owners: {OWNER_IDS}")
+print(f"Credit System: {CREDITS_PER_HOUR} credits/hour, {CREDITS_PER_DAY} credits/day")
 while True:
     try:
         bot.polling(none_stop=True, timeout=60, long_polling_timeout=60)
